@@ -135,7 +135,7 @@ class SLIP(nn.Module):
         self.rec_loss_weight = config.rec_loss_weight
         self.ret_loss_weight = config.ret_loss_weight
         self.trans = DualTransformer()
-        self.sample_num = 1
+        self.sample_num = config.sample_num
         self.dis_fc1 = nn.Linear(embed_dim * self.sample_num, embed_dim)
         self.dis_fc2 = nn.Linear(embed_dim * self.sample_num, embed_dim)
         ## ===> end of generate Gaussian masks
@@ -455,6 +455,7 @@ class SLIP(nn.Module):
             # ################################################################
             B_t, N_t, D = text_feat.shape
             B_v, N_v, D = video_feat.shape
+
             if B_t > B_v:
                 pad_feat = torch.zeros(1, N_v, D).to(video_feat.device)
                 pad_feat = pad_feat.repeat(B_t-B_v, 1, 1)
@@ -463,23 +464,22 @@ class SLIP(nn.Module):
                 pad_feat = torch.zeros(1, N_t, D).to(text_feat.device)
                 pad_feat = pad_feat.repeat(B_v-B_t, 1, 1)
                 text_feat = torch.cat([text_feat, pad_feat], dim=0)
-            try:
-                if self.sal_pred == 'ca+mlp':
-                    cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
-                    cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
-                elif self.sal_pred == 'trans':
-                    cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
-                    cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
-                elif self.sal_pred == 'mlp':
-                    cross_text_feat = text_feat
-                    cross_video_feat = video_feat
-                elif self.sal_pred == 'sa+mlp':
-                    cross_text_feat = self.attn(text_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
-                    cross_video_feat = self.attn(video_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
-            except:
-                pdb.set_trace()
+
+            if self.sal_pred == 'ca+mlp':
+                cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
+                cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
+            elif self.sal_pred == 'trans':
+                cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
+                # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
+                cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
+                # cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
+            elif self.sal_pred == 'mlp':
+                cross_text_feat = text_feat
+                cross_video_feat = video_feat
+            elif self.sal_pred == 'sa+mlp':
+                cross_text_feat = self.attn(text_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
+                cross_video_feat = self.attn(video_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
+
             if B_t < B_v:
                 text_feat = text_feat[: B_t, ::]
                 cross_text_feat = cross_text_feat[: B_t, ::]
