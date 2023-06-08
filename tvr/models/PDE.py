@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from functools import partial
 
 from timm.models.layers import DropPath
-
+import pdb
 
 class Mlp(nn.Module):
     def __init__(
@@ -58,7 +58,7 @@ class DisAttention(nn.Module):
         self.logsig_proj = nn.Linear(int(dim/2), dim)
         self.logsig_proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x, mask=None):
+    def forward(self, x, mask=None, weight=None):
         B, N, C = x.shape
         qkv = (
             self.qkv(x)
@@ -73,8 +73,12 @@ class DisAttention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         if mask is not None:
-            attn = attn + mask
+            attn = attn + mask            
         attn = attn.softmax(dim=-1)
+        if weight is not None:
+            weight = weight.unsqueeze(1).unsqueeze(1).expand(-1, self.num_heads, N, -1).reshape(*attn.shape)
+            attn = attn * (weight + 1e-10)
+            attn = attn / attn.sum(dim=-1, keepdim=True)
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C).reshape(B, N, 2, int(C/2))
@@ -132,9 +136,9 @@ class DisTrans(nn.Module):
             drop=drop,
         )
 
-    def forward(self, x, mask=None):
+    def forward(self, x, mask=None, weight=None):
         x_ = self.norm1(self.act(self.fc(x)))
-        mu, logsigma, attn = self.attn(x_, mask=mask)
+        mu, logsigma, attn = self.attn(x_, mask=mask, weight=weight)
         mu = x + self.drop_path(mu)
         mu = mu + self.drop_path(self.mu_mlp(self.norm2(mu)))
         logsigma = logsigma + self.drop_path(self.logsig_mlp(self.norm3(logsigma)))

@@ -449,30 +449,6 @@ class SLIP(nn.Module):
             video_mask = video_mask.squeeze()
             text_mask = text_mask.squeeze()
 
-            # probability distribution sampling
-            B,N,C = text_feat.shape
-            txt_mu, txt_logsigma, _ = self.text_gau_trans(text_feat)
-            samples = [txt_mu]
-            for _ in range(self.sample_num-1):
-                eps = torch.randn(B, N, C, device=txt_mu.device)
-                sample = txt_mu + torch.exp(txt_logsigma) * eps
-                samples.append(sample)
-            # pdb.set_trace()
-            text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            # text_feat = self.dis_fc1(text_feat)
-            # text_mask = text_mask.unsqueeze(1).expand(B, self.sample_num, -1).reshape(B * self.sample_num, N)
-
-            B,N,C = video_feat.shape
-            vid_mu, vid_logsigma, _ = self.video_gau_trans(video_feat)
-            samples = [vid_mu]
-            for _ in range(self.sample_num-1):
-                eps = torch.randn(B, N, C, device=vid_mu.device)
-                sample = vid_mu + torch.exp(vid_logsigma) * eps
-                samples.append(sample)
-            video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            # video_feat = self.dis_fc2(video_feat)
-            # video_mask = video_mask.unsqueeze(1).expand(B, self.sample_num, -1).reshape(B * self.sample_num, N)
-
             ############################
             # SA
             # cross-attn
@@ -547,6 +523,30 @@ class SLIP(nn.Module):
             # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
             # ################################################################
             
+            # probability distribution sampling
+            B,N,C = text_feat.shape
+            txt_mu, txt_logsigma, _ = self.text_gau_trans(text_feat, weight=text_weight)
+            samples = [txt_mu]
+            for _ in range(self.sample_num-1):
+                eps = torch.randn(B, N, C, device=txt_mu.device)
+                sample = txt_mu + torch.exp(txt_logsigma) * eps
+                samples.append(sample)
+            # pdb.set_trace()
+            text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            # text_feat = self.dis_fc1(text_feat)
+            # text_mask = text_mask.unsqueeze(1).expand(B, self.sample_num, -1).reshape(B * self.sample_num, N)
+
+            B,N,C = video_feat.shape
+            vid_mu, vid_logsigma, _ = self.video_gau_trans(video_feat, weight=video_weight)
+            samples = [vid_mu]
+            for _ in range(self.sample_num-1):
+                eps = torch.randn(B, N, C, device=vid_mu.device)
+                sample = vid_mu + torch.exp(vid_logsigma) * eps
+                samples.append(sample)
+            video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            # video_feat = self.dis_fc2(video_feat)
+            # video_mask = video_mask.unsqueeze(1).expand(B, self.sample_num, -1).reshape(B * self.sample_num, N)
+
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
 
@@ -593,6 +593,7 @@ class SLIP(nn.Module):
                 video_feat = torch.sum(video_feat, dim=1) / (video_sum.unsqueeze(1))
                 retrieve_logits = torch.einsum('ad,bd->ab', [text_feat, video_feat])
                 
+            # retrieve_logits = self.get_marginal_loss(retrieve_logits, 0.25, 0.05)
         if self.training:
             return retrieve_logits, retrieve_logits.T, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma
         return retrieve_logits, retrieve_logits.T
