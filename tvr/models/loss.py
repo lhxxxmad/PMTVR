@@ -1,8 +1,53 @@
 import torch
 import torch.nn.functional as F
 import pdb
+from .until_module import CrossEn
 
 
+def Wasserstein2(mu1, sigma1, mu2, sigma2): # 2W距离，传入图片和文本的均值和标准差
+    bs1 = mu1.shape[0]
+    bs2 = mu2.shape[0]
+    mu1 = torch.stack([mu1]*bs2, dim=1)
+    sigma1 = torch.stack([sigma1]*bs2, dim=1)
+    mu2 = torch.stack([mu2]*bs1, dim=0)
+    sigma2 = torch.stack([sigma2]*bs1, dim=0)
+    p1 = torch.sum(torch.pow(mu1 - mu2, 2), dim=-1)
+    p2 = torch.sum(torch.pow(sigma1 - sigma2, 2), dim=-1)
+    return p1+p2, p1
+
+def compute_dis_contrast(txt_mu, txt_sigma, vid_mu, vid_sigma, negative_scale = 1/2000, shift = 4, temp = 0.01):
+    loss_fct = CrossEn()
+    # vid_mu = vid_mu[:, 0]
+    # vid_sigma = torch.exp(vid_logsigma[:, 0])
+    # txt_mu = txt_mu[:, 0]
+    # txt_sigma = torch.exp(txt_logsigma[:, 0])
+
+    # pl_module.log('con/img_sigma_mean', torch.mean(vid_sigma), on_step=True)
+    # pl_module.log('con/txt_sigma_mean', torch.mean(txt_sigma), on_step=True)
+    
+    bs = vid_mu.shape[0]
+    # phase = "train" if pl_module.training else "val"
+
+    # gather
+    # allgather = AllGather_multi.apply
+    # vid_mu = allgather(vid_mu)
+    # txt_mu = allgather(txt_mu)
+    # vid_sigma = allgather(vid_sigma)
+    # txt_sigma = allgather(txt_sigma)
+
+    W2_distance, mu_distance = Wasserstein2(vid_mu, vid_sigma, txt_mu, txt_sigma)
+    similarity = (-negative_scale * W2_distance + shift) / temp
+
+    labels = torch.arange(bs).to(similarity.device)
+    loss = (F.cross_entropy(similarity, labels) + F.cross_entropy(similarity.transpose(0, 1), labels)) / 2
+    # loss = loss_fct(similarity) + loss_fct(similarity.transpose(0, 1)
+    
+    # pl_module.log(f"contrast/{phase}/loss", loss)
+    # pl_module.log("temperature", pl_module.temp)
+
+    # ret = {'contrast_loss': loss}
+
+    return loss
 
 def cal_nll_loss(logit, idx, mask, weights=None):
     eps = 0.1

@@ -34,7 +34,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/didemo \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 \
 --temp_loss_weight 1.0 \
@@ -64,6 +64,6 @@ main.py \
 --init_model outputs/didemo/best.bin \
 --output_dir outputs/didemo \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 

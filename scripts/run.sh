@@ -11,7 +11,7 @@ python3 -m torch.distributed.launch --nproc_per_node=1 \
 --master_port ${ARNOLD_WORKER_0_PORT} \
 main.py \
 --do_train 1 \
---workers 0 \
+--workers 8 \
 --n_display 50 \
 --epochs 5 \
 --lr 1e-4 \
@@ -26,7 +26,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --interact_mode FGW \
 # --sal_predictor trans
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
@@ -156,7 +156,7 @@ main.py \
 # --video_framerate 1 \
 # --output_dir outputs/activity \
 # --embd_mode wti \
-# --do_gauss 1 \
+# --do_gauss 0 \
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/anet/best.bin
 
 

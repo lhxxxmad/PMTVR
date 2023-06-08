@@ -35,7 +35,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/activity \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 \
 --rec_trans_num_layers1 4 \
@@ -65,7 +65,7 @@ main.py \
 --init_model outputs/activity/best.bin \
 --output_dir outputs/activity \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 \
 --rec_trans_num_layers1 4 \
