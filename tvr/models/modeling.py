@@ -792,13 +792,12 @@ class SLIP(nn.Module):
         
         logit_scale = self.clip.logit_scale.exp()
 
-        t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
-        v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
+        # t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
+        # v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
 
         loss_t2v = self.loss_fct(t2v_logits * logit_scale)
         loss_v2t = self.loss_fct(v2t_logits * logit_scale)
         
-
         loss = (loss_t2v + loss_v2t) / 2
 
         return loss, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma
