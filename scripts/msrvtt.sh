@@ -40,7 +40,7 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
+--sal_predictor sa+mlp \
 --sample_num 2
 
 echo "test model"
@@ -72,5 +72,5 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
+--sal_predictor sa+mlp \
 --sample_num 2

@@ -40,7 +40,7 @@ main.py \
 --text_mask_rate 0.1 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
---sal_predictor trans \
+--sal_predictor sa+mlp \
 --sample_num 2
 
 echo "test model"
@@ -72,5 +72,5 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --tmp_trans_num_layers 4 \
---sal_predictor trans \
+--sal_predictor sa+mlp \
 --sample_num 2
