@@ -233,7 +233,7 @@ class SLIP(nn.Module):
             sim_targets = pos_idx / pos_idx.sum(1, keepdim=True)
             
             # loss = 0.
-            retrieval_loss, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma = self.get_similarity_loss(text_feat, cls, video_feat, text_mask, video_mask, shaped=True)
+            retrieval_loss, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma, text_feat, video_feat = self.get_similarity_loss(text_feat, cls, video_feat, text_mask, video_mask, shaped=True)
 
             if self.do_gauss:
                 # remove learnable token
@@ -249,17 +249,17 @@ class SLIP(nn.Module):
 
             dis_cl_loss = compute_dis_contrast(txt_mu, torch.exp(txt_logsigma), vid_mu, torch.exp(vid_logsigma))
             # rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + dis_cl_loss #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ (rec_mt + rec_tm)/2.0
+            final_loss = self.ret_loss_weight * retrieval_loss + dis_cl_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ (rec_mt + rec_tm)/2.0
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'dis_cl_loss': self.ret_loss_weight * dis_cl_loss.item(), 
-                                # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
-                                # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
+                                'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
+                                'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
                                 # 'rec_tm_loss':rec_tm.item(),
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
@@ -595,7 +595,7 @@ class SLIP(nn.Module):
                 
             # retrieve_logits = self.get_marginal_loss(retrieve_logits, 0.25, 0.05)
         if self.training:
-            return retrieve_logits, retrieve_logits.T, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma
+            return retrieve_logits, retrieve_logits.T, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma, text_feat, video_feat
         return retrieve_logits, retrieve_logits.T
 
     def sample_gaussian_tensors(self, mu, logsigma, num_samples):
@@ -788,7 +788,7 @@ class SLIP(nn.Module):
             text_mask = text_mask.view(-1, text_mask.shape[-1])
             video_mask = video_mask.view(-1, video_mask.shape[-1])
 
-        t2v_logits, v2t_logits, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma = self.get_similarity_logits(text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=video_attention_mask, gauss=self.do_gauss)
+        t2v_logits, v2t_logits, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma, text_feat, video_feat = self.get_similarity_logits(text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=video_attention_mask, gauss=self.do_gauss)
         
         logit_scale = self.clip.logit_scale.exp()
 
@@ -800,7 +800,7 @@ class SLIP(nn.Module):
         
         loss = (loss_t2v + loss_v2t) / 2
 
-        return loss, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma
+        return loss, text_weight, video_weight, txt_mu, txt_logsigma, vid_mu, vid_logsigma, text_feat, video_feat
 
     @property
     def dtype(self):
