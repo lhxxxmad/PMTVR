@@ -249,17 +249,17 @@ class SLIP(nn.Module):
 
             dis_cl_loss = compute_dis_contrast(txt_mu, torch.exp(txt_logsigma), vid_mu, torch.exp(vid_logsigma))
             # rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + dis_cl_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ (rec_mt + rec_tm)/2.0
+            final_loss = self.ret_loss_weight * retrieval_loss + dis_cl_loss #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 #+ (rec_mt + rec_tm)/2.0
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'dis_cl_loss': self.ret_loss_weight * dis_cl_loss.item(), 
-                                'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
-                                'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
+                                # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
+                                # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
                                 # 'rec_tm_loss':rec_tm.item(),
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
